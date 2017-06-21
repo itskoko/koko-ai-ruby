@@ -2,18 +2,25 @@ module Koko
   class Tracker
     module Defaults
       module Request
-        HOST = 'api.koko.ai'
-        PORT = 443
-        PATH = '/'
-        SSL = true
-        HEADERS = { :accept => 'application/json' }
-        RETRIES = 4
-        BACKOFF = 30.0
+        class << self
+          attr_accessor :host, :port, :path, :ssl, :headers, :retries, :backoff
+        end
+
+        self.host = 'api.koko.ai'
+        self.port = 443
+        self.path = '/'
+        self.ssl = true
+        self.headers = { :accept => 'application/json' }
+        self.retries = 4
+        self.backoff = 30.0
       end
 
       module Queue
-        BATCH_SIZE = 10
-        MAX_SIZE = 10000
+        class << self
+          attr_accessor :max_size
+        end
+
+        self.max_size = 10000
       end
     end
   end

@@ -6,23 +6,24 @@ module Koko
       describe "#init" do
         it 'accepts string keys' do
           queue = Queue.new
-          worker = Koko::Tracker::Worker.new(queue, 'secret', 'batch_size' => 100)
-          expect(worker.instance_variable_get(:@batch_size)).to eq(100)
+          error_proc = Proc.new {}
+          worker = Koko::Tracker::Worker.new(queue, 'secret', 'on_error' => error_proc)
+          expect(worker.instance_variable_get(:@on_error)).to eq(error_proc)
         end
       end
 
       describe '#run' do
         before :all do
-          Koko::Tracker::Defaults::Request::BACKOFF = 0.1
+          Defaults::Request.backoff = 0.1
         end
 
         after :all do
-          Koko::Tracker::Defaults::Request::BACKOFF = 30.0
+          Defaults::Request.backoff = 30.0
         end
 
         it 'does not error if the endpoint is unreachable' do
           expect do
-            Net::HTTP.any_instance.stub(:post).and_raise(Exception)
+            stub_request(:any, /#{Defaults::Request.host}/).and_raise(Exception)
 
             queue = Queue.new
             queue << {}
@@ -30,8 +31,6 @@ module Koko
             worker.run
 
             expect(queue).to be_empty
-
-            Net::HTTP.any_instance.unstub(:post)
           end.to_not raise_error
         end
 
@@ -70,7 +69,7 @@ module Koko
           expect(on_error).to_not receive(:call)
 
           queue = Queue.new
-          queue << Factory::Content
+          queue << Factory.content
           worker = Koko::Tracker::Worker.new queue, 'testsecret', :on_error => on_error
           worker.run
 
@@ -94,7 +93,7 @@ module Koko
 
         it 'returns true if there is a current batch' do
           queue = Queue.new
-          queue << Factory::Content
+          queue << Factory.content
           worker = Koko::Tracker::Worker.new(queue, 'testsecret')
 
           Thread.new do

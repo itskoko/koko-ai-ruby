@@ -1,5 +1,7 @@
 require 'koko/tracker'
 require 'active_support/time'
+require 'webmock/rspec'
+require 'pry'
 
 # Setting timezone for ActiveSupport::TimeWithZone to UTC
 Time.zone = 'UTC'
@@ -7,20 +9,56 @@ Time.zone = 'UTC'
 module Koko
   class Tracker
     module Factory
+      def self.content
+        {
+          "id" => "123",
+          "created_at" => Time.at(1498070225),
+          "user_id" => "123",
+          "type" => "post",
+          "context_id" => "123",
+          "content_type" => "text",
+          "content" => { "text" => "Some content" }
+        }.clone
+      end
 
-      Content = {
-        :event => 'Ruby Library test event',
-        :properties => {
-          :type => 'Chocolate',
-          :is_a_lie => true,
-          :layers => 20,
-          :created =>  Time.new
+      def self.flag
+        {
+          "id" => "123",
+          "flagger_id" => "123",
+          "type" => "spam",
+          "created_at" => Time.at(1498070225),
+          "content" => { "id" => "123" }
+        }.clone
+      end
+
+      def self.moderation
+        {
+          "id" => "123",
+          "moderator_id" => "123",
+          "type" => "user_warned",
+          "created_at" => Time.at(1498070225),
+          "content" => { "id" => "123" }
         }
-      }
+      end
 
+      def self.behavorial_classification
+        {
+          "behavorial_classification" => {
+            "id" =>  "123",
+            "classification": [
+              {
+                "label" => "crisis",
+                "confidence" => 0.95
+              }
+            ]
+          }
+        }
+      end
     end
   end
 end
+
+Koko::Tracker::Defaults::Request.backoff = 0
 
 # usage:
 # it "should return a result of 5" do

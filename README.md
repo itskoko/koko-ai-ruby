@@ -46,6 +46,21 @@ koko.track_moderation(id: "123",
 
 ```
 
+To get behavorial classifications when tracking content pass a block with a
+single parameter which will be populated with the results. This block will be
+called synchronously.
+```ruby
+koko.track_content(id: "123",
+                   created_at: "2016-08-29T09:12:33.001Z",
+                   user_id: "123",
+                   type: "post",
+                   context_id: "123",
+                   content_type: "text",
+                   content: { text: "Some content" }) do |classification|
+  crisis_confidence = classification.find { |c| c['label'] == 'crisis' }['confidence']
+end
+```
+
 ## Testing
 
 You can use the `stub` option to Koko::Tracking.new to cause all requests to be stubbed, making it easier to test with this library.

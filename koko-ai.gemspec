@@ -17,5 +17,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 10.3'
   spec.add_development_dependency 'rspec', '~> 2.0'
   spec.add_development_dependency 'tzinfo', '1.2.1'
+  spec.add_development_dependency 'pry', '~> 0.10.4'
+  spec.add_development_dependency 'webmock', '~> 3.0.1'
   spec.add_development_dependency 'activesupport', '>= 3.0.0', '<4.0.0'
 end

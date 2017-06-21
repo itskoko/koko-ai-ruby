@@ -3,7 +3,7 @@ require 'spec_helper'
 module Koko
   class Tracker
     describe Tracker do
-      let(:tracker) { Koko::Tracker.new :auth => AUTH, :stub => true }
+      let(:tracker) { Koko::Tracker.new :auth => 'secret', :stub => true }
 
       describe '#track' do
         it 'errors with incorrect attributes' do
@@ -12,7 +12,7 @@ module Koko
 
         it 'does not error with the required options' do
           expect do
-            tracker.track_content Factory::Content
+            tracker.track_content Factory.content
             sleep(1)
           end.to_not raise_error
         end
@@ -21,8 +21,8 @@ module Koko
       describe '#flush' do
         it 'flushes without error' do
           expect do
-            tracker.track_content Factory::Content
-            client.flush
+            tracker.track_content Factory.content
+            tracker.flush
           end.to_not raise_error
         end
       end

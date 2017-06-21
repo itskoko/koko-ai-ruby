@@ -9,20 +9,21 @@ require 'json'
 module Koko
   class Tracker
     class Request
-      include Koko::Tracker::Defaults::Request
       include Koko::Tracker::Utils
       include Koko::Tracker::Logging
+
+      attr_reader :http
 
       # public: Creates a new request object to send analytics batch
       #
       def initialize(options = {})
-        options[:host] ||= HOST
-        options[:port] ||= PORT
-        options[:ssl] ||= SSL
-        options[:headers] ||= HEADERS
-        @path = options[:path] || PATH
-        @retries = options[:retries] || RETRIES
-        @backoff = options[:backoff] || BACKOFF
+        options[:host] ||= Defaults::Request.host
+        options[:port] ||= Defaults::Request.port
+        options[:ssl] ||= Defaults::Request.ssl
+        options[:headers] ||= Defaults::Request.headers
+        @path = options[:path] || Defaults::Request.path
+        @retries = options[:retries] || Defaults::Request.retries
+        @backoff = options[:backoff] || Defaults::Request.backoff
 
         http = Net::HTTP.new(options[:host], options[:port])
         http.use_ssl = options[:ssl]
@@ -35,25 +36,28 @@ module Koko
       # public: Posts the write key and batch of messages to the API.
       #
       # returns - Response of the status and error if it exists
-      def post(auth, batch)
+      def post(auth, body)
         status, error = nil, nil
-        remaining_retries = @retries
+        remaining_retries = @retries + 1
         backoff = @backoff
-        headers = { 'Content-Type' => 'application/json', 'accept' => 'application/json' }
+        headers = { 'Content-Type' => 'application/json' }
         begin
-          payload = JSON.generate :sentAt => datetime_in_iso8601(Time.new), :batch => batch
+          payload = JSON.generate body
           request = Net::HTTP::Post.new(@path, headers)
-          request.basic_auth write_key, nil
+          request['authorization'] = auth
 
           if self.class.stub
             status = 200
             error = nil
-            logger.debug "stubbed request to #{@path}: write key = #{write_key}, payload = #{payload}"
+            logger.debug "stubbed request to #{@path}: auth = #{auth}, payload = #{payload}"
           else
             res = @http.request(request, payload)
             status = res.code.to_i
-            body = JSON.parse(res.body)
-            error = body["error"]
+            if status < 500
+              body = JSON.parse(res.body)
+            else
+              raise res.body
+            end
           end
         rescue Exception => e
           unless (remaining_retries -=1).zero?
@@ -64,10 +68,10 @@ module Koko
           logger.error e.message
           e.backtrace.each { |line| logger.error line }
           status = -1
-          error = "Connection error: #{e}"
+          body = "Connection error: #{e}"
         end
 
-        Response.new status, error
+        Response.new status, body
       end
 
       class << self

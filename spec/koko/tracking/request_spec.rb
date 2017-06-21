@@ -32,24 +32,24 @@ module Koko
         end
 
         it 'sets the http client' do
-          expect(subject.instance_variable_get(:@http)).to_not be_nil
+          expect(subject.http).to_not be_nil
         end
 
         context 'no options are set' do
           it 'sets a default path' do
-            expect(subject.instance_variable_get(:@path)).to eq(described_class::PATH)
+            expect(subject.instance_variable_get(:@path)).to eq(Defaults::Request.path)
           end
 
           it 'sets a default retries' do
-            expect(subject.instance_variable_get(:@retries)).to eq(described_class::RETRIES)
+            expect(subject.instance_variable_get(:@retries)).to eq(Defaults::Request.retries)
           end
 
           it 'sets a default backoff' do
-            expect(subject.instance_variable_get(:@backoff)).to eq(described_class::BACKOFF)
+            expect(subject.instance_variable_get(:@backoff)).to eq(Defaults::Request.backoff)
           end
 
           it 'initializes a new Net::HTTP with default host and port' do
-            expect(Net::HTTP).to receive(:new).with(described_class::HOST, described_class::PORT)
+            expect(Net::HTTP).to receive(:new).with(Defaults::Request.host, Defaults::Request.port)
             described_class.new
           end
         end
@@ -92,28 +92,20 @@ module Koko
       end
 
       describe '#post' do
-        let(:response) { Net::HTTPResponse.new(http_version, status_code, response_body) }
-        let(:http_version) { 1.1 }
-        let(:status_code) { 200 }
+        let(:subject) { Request.new(backoff: 0) }
+
         let(:response_body) { {}.to_json }
-        let(:write_key) { 'abcdefg' }
-        let(:batch) { [] }
+        let(:auth) { 'abcdefg' }
+        let(:body) { { some: 'value' } }
 
-        before do
-          allow(subject.instance_variable_get(:@http)).to receive(:request) { response }
-          allow(response).to receive(:body) { response_body }
-        end
+        it 'makes a request with the correct headers and body' do
+          stub_request(:post, /#{subject.http.address}/).
+            with(body: body, headers: { 'Content-Type' => 'application/json', 'authorization' => auth }).
+            to_return(body: response_body)
 
-        it 'initalizes a new Net::HTTP::Post with path and default headers' do
-          path = subject.instance_variable_get(:@path)
-          default_headers = { 'Content-Type' => 'application/json', 'accept' => 'application/json' }
-          expect(Net::HTTP::Post).to receive(:new).with(path, default_headers).and_call_original
-          subject.post(write_key, batch)
-        end
+          response = subject.post(auth, body)
 
-        it 'adds basic auth to the Net::HTTP::Post' do
-          expect_any_instance_of(Net::HTTP::Post).to receive(:basic_auth).with(write_key, nil)
-          subject.post(write_key, batch)
+          expect(response.body).to eq({})
         end
 
         context 'with a stub' do
@@ -122,65 +114,78 @@ module Koko
           end
 
           it 'returns a 200 response' do
-            expect(subject.post(write_key, batch).status).to eq(200)
-          end
-
-          it 'has a nil error' do
-            expect(subject.post(write_key, batch).error).to be_nil
+            expect(subject.post(auth, body).status).to eq(200)
           end
 
           it 'logs a debug statement' do
             expect(subject.logger).to receive(:debug).with(/stubbed request to/)
-            subject.post(write_key, batch)
+            subject.post(auth, body)
           end
         end
 
         context 'a real request' do
+          let(:status_code) { 200 }
+
+          before do
+            stub_request(:post, /.*/).
+            to_return(body: response_body, status: status_code)
+          end
+
           context 'request is successful' do
             let(:status_code) { 201 }
-            it 'returns a response code' do
-              expect(subject.post(write_key, batch).status).to eq(status_code)
-            end
 
-            it 'returns a nil error' do
-              expect(subject.post(write_key, batch).error).to be_nil
+            it 'returns a response code' do
+              expect(subject.post(auth, body).status).to eq(status_code)
             end
           end
 
-          context 'request results in errorful response' do
-            let(:error) { 'this is an error' }
+          context 'request results in 400 ' do
+            let(:error)       { 'this is an error' }
+            let(:status_code) { 400 }
             let(:response_body) { { error: error }.to_json }
 
             it 'returns the parsed error' do
-              expect(subject.post(write_key, batch).error).to eq(error)
+              expect(subject.post(auth, body).body).to eq({ "error" => error })
+            end
+          end
+
+          context 'request results in 500 ' do
+            let(:error)         { 'this is an error' }
+            let(:status_code)   { 500 }
+            let(:response_body) { { error: error }.to_json }
+            let(:retries)       { 2 }
+
+            subject { described_class.new(retries: retries) }
+
+            it 'retries' do
+              subject.post(auth, body)
+              expect(a_request(:post, /.*/)).to have_been_made.times(retries + 1)
             end
           end
 
           context 'request or parsing of response results in an exception' do
             let(:response_body) { 'Malformed JSON ---' }
 
-            let(:backoff) { 0 }
-
-            subject { described_class.new(retries: retries, backoff: backoff) }
+            subject { described_class.new(retries: retries) }
 
             context 'remaining retries is > 1' do
-              let(:retries) { 2 }
+              let(:retries) { 1 }
 
               it 'sleeps' do
-                expect(subject).to receive(:sleep).exactly(retries - 1).times
-                subject.post(write_key, batch)
+                expect(subject).to receive(:sleep).exactly(retries).times
+                subject.post(auth, body)
               end
             end
 
-            context 'remaining retries is 1' do
-              let(:retries) { 1 }
+            context 'remaining retries is 0' do
+              let(:retries) { 0 }
 
               it 'returns a -1 for status' do
-                expect(subject.post(write_key, batch).status).to eq(-1)
+                expect(subject.post(auth, body).status).to eq(-1)
               end
 
               it 'has a connection error' do
-                expect(subject.post(write_key, batch).error).to match(/Connection error/)
+                expect(subject.post(auth, body).body).to match(/Connection error/)
               end
             end
           end

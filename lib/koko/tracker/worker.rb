@@ -7,7 +7,6 @@ module Koko
   class Tracker
     class Worker
       include Koko::Tracker::Utils
-      include Koko::Tracker::Defaults
 
       # public: Creates a new worker
       #
@@ -15,16 +14,14 @@ module Koko
       # and makes requests to the segment.io api
       #
       # queue   - Queue synchronized between client and worker
-      # auth  - String of the project's Write key
+      # auth  - String of the project's authorization token
       # options - Hash of worker options
-      #           batch_size - Fixnum of how many items to send in a batch
       #           on_error   - Proc of what to do on an error
       #
       def initialize(queue, auth, options = {})
         symbolize_keys! options
         @queue = queue
         @auth = auth
-        @batch_size = options[:batch_size] || Queue::BATCH_SIZE
         @on_error = options[:on_error] || Proc.new { |status, error| }
         @batch = []
         @lock = Mutex.new
@@ -36,17 +33,23 @@ module Koko
         until Thread.current[:should_exit]
           return if @queue.empty?
 
-          @lock.synchronize do
-            until @batch.length >= @batch_size || @queue.empty?
-              @batch << @queue.pop
-            end
+          # Batch size of 1 as api doesn't support batching yet
+          @batch << @queue.pop
+
+          res = @lock.synchronize do
+            request = @batch.first
+            Request.new(path: request[:path]).post(@auth, request[:body])
           end
 
-          res = Request.new.post @auth, @batch
-
-          @on_error.call res.status, res.error unless res.status == 200
+          unless res.status == 200
+            @on_error.call res.status, res.body
+          end
           @lock.synchronize { @batch.clear }
         end
+      end
+
+      def sync(request)
+        Request.new(path: request[:path]).post(@auth, request[:body])
       end
 
       # public: Check whether we have outstanding requests.

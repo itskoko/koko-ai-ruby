@@ -20,7 +20,7 @@ module Koko
 
         @queue = Queue.new
         @auth = attrs[:auth]
-        @max_queue_size = attrs[:max_queue_size] || Defaults::Queue::MAX_SIZE
+        @max_queue_size = attrs[:max_queue_size] || Defaults::Queue.max_size
         @options = attrs
         @worker_mutex = Mutex.new
         @worker = Worker.new @queue, @auth, @options
@@ -44,38 +44,51 @@ module Koko
       # public: Track content
       #
       # attrs - Hash (see https://docs.koko.ai/#track-endpoints)
-      def track_content attrs
+      def track_content attrs, &block
         symbolize_keys! attrs
 
-        event = attrs[:event]
-        properties = attrs[:properties] || {}
-        timestamp = attrs[:timestamp] || Time.new
-        context = attrs[:context] || {}
-        message_id = attrs[:message_id].to_s if attrs[:message_id]
-
+        timestamp = attrs[:created_at] || Time.new
         check_timestamp! timestamp
+        attrs[:created_at] = timestamp.to_f
 
-        if event.nil? || event.empty?
-          fail ArgumentError, 'Must supply event as a non-empty string'
+        request = { path: '/track/content', body: attrs }
+
+        if block
+          response = @worker.sync(request)
+          block.call(response.body)
+        else
+          enqueue(request)
         end
+      end
 
-        fail ArgumentError, 'Properties must be a Hash' unless properties.is_a? Hash
-        isoify_dates! properties
+      # public: Track flag
+      #
+      # attrs - Hash (see https://docs.koko.ai/#track-endpoints)
+      def track_flag attrs
+        symbolize_keys! attrs
 
-        add_context context
+        timestamp = attrs[:created_at] || Time.new
+        check_timestamp! timestamp
+        attrs[:created_at] = timestamp.to_f
 
-        enqueue({
-          :event => event,
-          :userId => attrs[:user_id],
-          :anonymousId => attrs[:anonymous_id],
-          :context => context,
-          :options => attrs[:options],
-          :integrations => attrs[:integrations],
-          :properties => properties,
-          :messageId => message_id,
-          :timestamp => datetime_in_iso8601(timestamp),
-          :type => 'track'
-        })
+        request = { path: '/track/flag', body: attrs }
+
+        enqueue(request)
+      end
+
+      # public: Track moderation
+      #
+      # attrs - Hash (see https://docs.koko.ai/#track-endpoints)
+      def track_moderation attrs
+        symbolize_keys! attrs
+
+        timestamp = attrs[:created_at] || Time.new
+        check_timestamp! timestamp
+        attrs[:created_at] = timestamp.to_f
+
+        request = { path: '/track/moderation', body: attrs }
+
+        enqueue(request)
       end
 
       # public: Returns the number of queued messages
@@ -90,12 +103,11 @@ module Koko
       # private: Enqueues the action.
       #
       # returns Boolean of whether the item was added to the queue.
-      def enqueue(action)
+      def enqueue(request)
         # add our request id for tracing purposes
-        action[:messageId] ||= uid
         unless queue_full = @queue.length >= @max_queue_size
           ensure_worker_running
-          @queue << action
+          @queue << request
         end
         !queue_full
       end
