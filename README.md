@@ -19,13 +19,13 @@ gem install 'koko-ai'
 
 Create an instance of the client:
 ```ruby
-koko = Koko::Tracking.new(auth: 'YOUR_AUTH_KEY')
+koko = Koko::Tracker.new(auth: 'YOUR_AUTH_KEY')
 ```
 
 Track content, see more [here](https://docs.koko.ai/#track-endpoints).
 ```ruby
 koko.track_content(id: "123",
-                   created_at: "2016-08-29T09:12:33.001Z",
+                   created_at: Time.now,
                    user_id: "123",
                    type: "post",
                    context_id: "123",
@@ -35,13 +35,13 @@ koko.track_content(id: "123",
 koko.track_flag(id: "123",
                 flagger_id: "123",
                 type: "spam",
-                created_at: "2016-08-29T09:12:33.001Z",
+                created_at: Time.now,
                 content: {"id":"123"})
 
 koko.track_moderation(id: "123",
                       moderator_id: "123",
                       type: "user_warned",
-                      created_at: "2016-08-29T09:12:33.001Z",
+                      created_at: Time.now,
                       content: { id:"123" })
 
 ```
@@ -63,7 +63,7 @@ end
 
 ## Testing
 
-You can use the `stub` option to Koko::Tracking.new to cause all requests to be stubbed, making it easier to test with this library.
+You can use the `stub` option to Koko::Tracker.new to cause all requests to be stubbed, making it easier to test with this library.
 
 ## License
 
