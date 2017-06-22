@@ -3,7 +3,7 @@ module Koko
     module Defaults
       module Request
         class << self
-          attr_accessor :host, :port, :path, :ssl, :headers, :retries, :backoff
+          attr_accessor :host, :port, :path, :ssl, :headers
         end
 
         self.host = 'api.koko.ai'
@@ -11,16 +11,6 @@ module Koko
         self.path = '/'
         self.ssl = true
         self.headers = { :accept => 'application/json' }
-        self.retries = 4
-        self.backoff = 30.0
-      end
-
-      module Queue
-        class << self
-          attr_accessor :max_size
-        end
-
-        self.max_size = 10000
       end
     end
   end

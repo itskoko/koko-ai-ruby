@@ -1,6 +1,8 @@
-require 'koko/tracker'
+Bundler.require
+
 require 'active_support/time'
 require 'webmock/rspec'
+require 'timecop'
 require 'pry'
 
 # Setting timezone for ActiveSupport::TimeWithZone to UTC
@@ -57,8 +59,6 @@ module Koko
     end
   end
 end
-
-Koko::Tracker::Defaults::Request.backoff = 0
 
 # usage:
 # it "should return a result of 5" do

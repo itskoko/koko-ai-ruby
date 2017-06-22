@@ -10,6 +10,10 @@ module Koko
         @status = status
         @body  = body
       end
+
+      def valid?
+        @status >= 200 && @status < 300
+      end
     end
   end
 end

@@ -40,14 +40,6 @@ module Koko
             expect(subject.instance_variable_get(:@path)).to eq(Defaults::Request.path)
           end
 
-          it 'sets a default retries' do
-            expect(subject.instance_variable_get(:@retries)).to eq(Defaults::Request.retries)
-          end
-
-          it 'sets a default backoff' do
-            expect(subject.instance_variable_get(:@backoff)).to eq(Defaults::Request.backoff)
-          end
-
           it 'initializes a new Net::HTTP with default host and port' do
             expect(Net::HTTP).to receive(:new).with(Defaults::Request.host, Defaults::Request.port)
             described_class.new
@@ -56,15 +48,11 @@ module Koko
 
         context 'options are given' do
           let(:path) { 'my/cool/path' }
-          let(:retries) { 1234 }
-          let(:backoff) { 10 }
           let(:host) { 'http://www.example.com' }
           let(:port) { 8080 }
           let(:options) do
             {
               path: path,
-              retries: retries,
-              backoff: backoff,
               host: host,
               port: port
             }
@@ -74,14 +62,6 @@ module Koko
 
           it 'sets passed in path' do
             expect(subject.instance_variable_get(:@path)).to eq(path)
-          end
-
-          it 'sets passed in retries' do
-            expect(subject.instance_variable_get(:@retries)).to eq(retries)
-          end
-
-          it 'sets passed in backoff' do
-            expect(subject.instance_variable_get(:@backoff)).to eq(backoff)
           end
 
           it 'initializes a new Net::HTTP with passed in host and port' do
@@ -150,44 +130,20 @@ module Koko
           end
 
           context 'request results in 500 ' do
-            let(:error)         { 'this is an error' }
             let(:status_code)   { 500 }
-            let(:response_body) { { error: error }.to_json }
-            let(:retries)       { 2 }
+            let(:response_body) { "Something is wrong" }
 
-            subject { described_class.new(retries: retries) }
-
-            it 'retries' do
-              subject.post(auth, body)
-              expect(a_request(:post, /.*/)).to have_been_made.times(retries + 1)
+            it 'returns the body raw' do
+              expect(subject.post(auth, body).body).to eq("Something is wrong")
             end
           end
+        end
 
-          context 'request or parsing of response results in an exception' do
-            let(:response_body) { 'Malformed JSON ---' }
+        context 'request or parsing of response results in an exception' do
+          let(:response_body) { 'Malformed JSON ---' }
 
-            subject { described_class.new(retries: retries) }
-
-            context 'remaining retries is > 1' do
-              let(:retries) { 1 }
-
-              it 'sleeps' do
-                expect(subject).to receive(:sleep).exactly(retries).times
-                subject.post(auth, body)
-              end
-            end
-
-            context 'remaining retries is 0' do
-              let(:retries) { 0 }
-
-              it 'returns a -1 for status' do
-                expect(subject.post(auth, body).status).to eq(-1)
-              end
-
-              it 'has a connection error' do
-                expect(subject.post(auth, body).body).to match(/Connection error/)
-              end
-            end
+          it 'has a connection error' do
+            expect(subject.post(auth, body).body).to match(/Connection error/)
           end
         end
       end
