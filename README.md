@@ -39,14 +39,13 @@ koko.track_flag(id: "123",
                 content: {"id":"123"})
 
 koko.track_moderation(id: "123",
-                      moderator_id: "123",
                       type: "user_warned",
                       created_at: Time.now,
                       content: { id:"123" })
 
 ```
 
-To get behavorial classifications when tracking content pass a block with a
+To get behavorial classifications when tracking content, pass a block with a
 single parameter which will be populated with the results. This block will be
 called synchronously.
 ```ruby
