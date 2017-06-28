@@ -3,7 +3,7 @@ require File.expand_path('../lib/koko/tracker/version', __FILE__)
 Gem::Specification.new do |spec|
   spec.name = 'koko-ai-ruby'
   spec.version = Koko::Tracker::VERSION
-  spec.files = Dir.glob('**/*')
+  spec.files = `git ls-files`.split("\n")
   spec.require_paths = ['lib']
   spec.summary = 'Koko AI Client'
   spec.description = 'The Koko AI ruby client library'
@@ -11,8 +11,6 @@ Gem::Specification.new do |spec|
   spec.email = 'us@itskoko.com'
   spec.homepage = 'https://github.com/itskoko/koko-ai-ruby'
   spec.license = 'MIT'
-
-  spec.add_dependency 'commander', '~> 4.4'
 
   spec.add_development_dependency 'rake', '~> 10.3'
   spec.add_development_dependency 'rspec', '~> 2.0'
