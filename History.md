@@ -8,3 +8,8 @@
 ==================
 
   * Support all endpoints in api
+
+0.0.3 / 2017-06-28
+==================
+
+  * Remove unnecessary dependency
