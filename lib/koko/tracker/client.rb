@@ -30,7 +30,7 @@ module Koko
 
         timestamp = attrs[:created_at] || Time.now
         check_timestamp! timestamp
-        attrs[:created_at] = timestamp
+        attrs[:created_at] = timestamp.iso8601
 
         handle_response(Request.new(path: '/track/content').post(@auth, attrs)).body
       end
@@ -43,7 +43,7 @@ module Koko
 
         timestamp = attrs[:created_at] || Time.now
         check_timestamp! timestamp
-        attrs[:created_at] = timestamp
+        attrs[:created_at] = timestamp.iso8601
 
         handle_response(Request.new(path: '/track/flag').post(@auth, attrs)).body
       end
@@ -56,7 +56,7 @@ module Koko
 
         timestamp = attrs[:created_at] || Time.now
         check_timestamp! timestamp
-        attrs[:created_at] = timestamp
+        attrs[:created_at] = timestamp.iso8601
 
         handle_response(Request.new(path: '/track/moderation').post(@auth, attrs)).body
       end
