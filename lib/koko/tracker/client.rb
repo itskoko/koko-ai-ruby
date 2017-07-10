@@ -25,20 +25,14 @@ module Koko
       # public: Track content
       #
       # attrs - Hash (see https://docs.koko.ai/#track-endpoints)
-      def track_content attrs, &block
+      def track_content attrs
         symbolize_keys! attrs
 
         timestamp = attrs[:created_at] || Time.now
         check_timestamp! timestamp
         attrs[:created_at] = timestamp
 
-        response = handle_response(Request.new(path: '/track/content').post(@auth, attrs))
-
-        if block
-          block.call(response.body)
-        end
-
-        true
+        handle_response(Request.new(path: '/track/content').post(@auth, attrs)).body
       end
 
       # public: Track flag
@@ -51,9 +45,7 @@ module Koko
         check_timestamp! timestamp
         attrs[:created_at] = timestamp
 
-        handle_response(Request.new(path: '/track/flag').post(@auth, attrs))
-
-        true
+        handle_response(Request.new(path: '/track/flag').post(@auth, attrs)).body
       end
 
       # public: Track moderation
@@ -66,9 +58,7 @@ module Koko
         check_timestamp! timestamp
         attrs[:created_at] = timestamp
 
-        handle_response(Request.new(path: '/track/moderation').post(@auth, attrs))
-
-        true
+        handle_response(Request.new(path: '/track/moderation').post(@auth, attrs)).body
       end
 
       private

@@ -22,7 +22,7 @@ Create an instance of the client:
 koko = Koko::Tracker.new(auth: 'YOUR_AUTH_KEY')
 ```
 
-Track content, see more [here](https://docs.koko.ai/#track-endpoints).
+Track content, flags and moderations, see more [here](https://docs.koko.ai/#track-endpoints).
 ```ruby
 koko.track_content(id: "123",
                    created_at: Time.now,
@@ -36,28 +36,27 @@ koko.track_flag(id: "123",
                 flagger_id: "123",
                 type: "spam",
                 created_at: Time.now,
-                content: {"id":"123"})
+                targets: [{content_id: "123"}])
 
 koko.track_moderation(id: "123",
                       type: "user_warned",
                       created_at: Time.now,
-                      content: { id:"123" })
+                      targets: [{content_id: "123" }])
 
 ```
 
-To get behavorial classifications when tracking content, pass a block with a
-single parameter which will be populated with the results. This block will be
-called synchronously.
+To get behavorial classifications when tracking content, pass the classifiers
+you want run as an options param
 ```ruby
-koko.track_content(id: "123",
-                   created_at: "2016-08-29T09:12:33.001Z",
-                   user_id: "123",
-                   type: "post",
-                   context_id: "123",
-                   content_type: "text",
-                   content: { text: "Some content" }) do |classification|
-  crisis_confidence = classification.find { |c| c['label'] == 'crisis' }['confidence']
-end
+classifications = koko.track_content(id: "123",
+                                     created_at: Time.now,
+                                     user_id: "123",
+                                     type: "post",
+                                     context_id: "123",
+                                     content_type: "text",
+                                     content: { text: "Some content" },
+                                     options: { classifiers: ['crisis'] })
+
 ```
 
 ## Testing

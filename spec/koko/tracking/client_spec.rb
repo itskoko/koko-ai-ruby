@@ -63,11 +63,9 @@ module Koko
           expect(WebMock).to have_requested(:post, "https://#{Defaults::Request.host}/track/content").with(body: expected_body)
         end
 
-        it 'returns the parsed body if a block is passed' do
-          response_body = nil
-          client.track_content(Factory.content) do |response|
-            response_body = response
-          end
+        it 'returns the parsed body' do
+          response_body = client.track_content(Factory.content)
+
           expect(response_body).to eq(JSON.load(body))
         end
       end
