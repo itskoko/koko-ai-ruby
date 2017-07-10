@@ -28,9 +28,9 @@ module Koko
       def track_content attrs, &block
         symbolize_keys! attrs
 
-        timestamp = attrs[:created_at] || Time.new
+        timestamp = attrs[:created_at] || Time.now
         check_timestamp! timestamp
-        attrs[:created_at] = timestamp.to_f
+        attrs[:created_at] = timestamp
 
         response = handle_response(Request.new(path: '/track/content').post(@auth, attrs))
 
@@ -47,9 +47,9 @@ module Koko
       def track_flag attrs
         symbolize_keys! attrs
 
-        timestamp = attrs[:created_at] || Time.new
+        timestamp = attrs[:created_at] || Time.now
         check_timestamp! timestamp
-        attrs[:created_at] = timestamp.to_f
+        attrs[:created_at] = timestamp
 
         handle_response(Request.new(path: '/track/flag').post(@auth, attrs))
 
@@ -62,9 +62,9 @@ module Koko
       def track_moderation attrs
         symbolize_keys! attrs
 
-        timestamp = attrs[:created_at] || Time.new
+        timestamp = attrs[:created_at] || Time.now
         check_timestamp! timestamp
-        attrs[:created_at] = timestamp.to_f
+        attrs[:created_at] = timestamp
 
         handle_response(Request.new(path: '/track/moderation').post(@auth, attrs))
 

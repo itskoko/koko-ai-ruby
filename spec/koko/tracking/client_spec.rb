@@ -52,14 +52,14 @@ module Koko
         it 'uses the current time if no timestamp is given' do
           client.track_content(Factory.content.merge("created_at" => nil))
 
-          expected_body = JSON.generate(Factory.content.merge("created_at" => Time.now.to_f))
+          expected_body = JSON.generate(Factory.content.merge("created_at" => Time.now))
           expect(WebMock).to have_requested(:post, "https://#{Defaults::Request.host}/track/content").with(body: expected_body)
         end
 
-        it 'makes the correct request converting created_at time to float' do
+        it 'makes the correct request converting created_at time to iso8601 string' do
           client.track_content Factory.content
 
-          expected_body = JSON.generate(Factory.content.merge("created_at" => Factory.content["created_at"].to_f))
+          expected_body = JSON.generate(Factory.content.merge("created_at" => Factory.content["created_at"]))
           expect(WebMock).to have_requested(:post, "https://#{Defaults::Request.host}/track/content").with(body: expected_body)
         end
 
@@ -92,7 +92,7 @@ module Koko
         it 'makes the correct request converting created_at time to float' do
           client.track_flag Factory.flag
 
-          expected_body = JSON.generate(Factory.flag.merge("created_at" => Factory.flag["created_at"].to_f))
+          expected_body = JSON.generate(Factory.flag.merge("created_at" => Factory.flag["created_at"]))
           expect(WebMock).to have_requested(:post, "https://#{Defaults::Request.host}/track/flag").with(body: expected_body)
         end
       end
@@ -117,7 +117,7 @@ module Koko
         it 'makes the correct request converting created_at time to float' do
           client.track_moderation Factory.moderation
 
-          expected_body = JSON.generate(Factory.moderation.merge("created_at" => Factory.moderation["created_at"].to_f))
+          expected_body = JSON.generate(Factory.moderation.merge("created_at" => Factory.moderation["created_at"]))
           expect(WebMock).to have_requested(:post, "https://#{Defaults::Request.host}/track/moderation").with(body: expected_body)
         end
       end

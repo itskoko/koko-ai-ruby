@@ -45,7 +45,7 @@ module Koko
 
       def self.behavorial_classification
         {
-          "behavorial_classification" => {
+          "classifiers" => {
             "id" =>  "123",
             "classification": [
               {
