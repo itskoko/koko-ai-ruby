@@ -23,3 +23,8 @@
 ==================
 
   * Return body directly instead of using block
+
+0.0.6 / 2017-07-10
+==================
+
+  * Use iso8601 serialization for created_at time
