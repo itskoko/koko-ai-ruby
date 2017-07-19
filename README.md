@@ -28,21 +28,22 @@ koko.track_content(id: "123",
                    created_at: Time.now,
                    user_id: "123",
                    type: "post",
-                   context_id: "123",
-                   content_type: "text",
-                   content: { text: "Some content" })
+                   group_id: "123",
+                   content: { text: "Some content", format: "plain" })
 
 koko.track_flag(id: "123",
                 flagger_id: "123",
-                type: "spam",
+                reasons: ["crisis"],
                 created_at: Time.now,
-                targets: [{content_id: "123"}])
+                targets: [{"content_id":"123"}])
 
 koko.track_moderation(id: "123",
-                      type: "user_warned",
+                      moderator_id: "123",
+                      reasons: ["abusive"],
+                      action: "user_warned",
                       created_at: Time.now,
-                      targets: [{content_id: "123" }])
-
+                      targets: [{"content_id":"123"}],
+                      automated: false)
 ```
 
 To get behavorial classifications when tracking content, pass the classifiers
@@ -52,11 +53,9 @@ classifications = koko.track_content(id: "123",
                                      created_at: Time.now,
                                      user_id: "123",
                                      type: "post",
-                                     context_id: "123",
-                                     content_type: "text",
-                                     content: { text: "Some content" },
-                                     options: { classifiers: ['crisis'] })
-
+                                     group_id: "123",
+                                     content: { text: "Some content", format: "plain" },
+                                     options: { classifiers: ["crisis"] })
 ```
 
 ## Testing
